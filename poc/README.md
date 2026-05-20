@@ -53,19 +53,22 @@ docker run --rm --gpus all \
 
 First swap run will download the requested swap model + restorer on demand.
 
-### Option B — install from source (needs Python 3.10+ and CUDA already configured)
+### Option B — install from source into a venv (needs Python 3.10+ and CUDA already configured)
 
-> ⚠ Do **NOT** `pip install facefusion` — that PyPI name is a 1 kB squatter package, not the real project. Real FaceFusion is from-source only.
+> ⚠ **Two traps here:**
+> 1. Do NOT `pip install facefusion` — that PyPI name is a 1 kB squatter package, not the real project.
+> 2. Do NOT run FaceFusion's own `install.py` inside a plain venv — it expects a conda env and will silently no-op (prints "conda is not activated" then exits) leaving `cv2` and other deps uninstalled. Use `pip install -r requirements.txt` instead.
 
 ```bash
 sudo apt install -y python3-venv python3-pip
 python3 -m venv ~/facefusion-venv
 source ~/facefusion-venv/bin/activate
 pip install --upgrade pip
+pip install onnxruntime-gpu              # GPU variant; otherwise transitive deps pick CPU
 
 git clone https://github.com/facefusion/facefusion ~/facefusion-src
 cd ~/facefusion-src
-python install.py --onnxruntime cuda    # picks correct PyTorch + onnxruntime-gpu
+pip install -r requirements.txt          # bypasses install.py / conda
 
 python facefusion.py --help              # verify
 ```
