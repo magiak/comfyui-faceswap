@@ -35,8 +35,8 @@ comfyui-faceswap/
 git clone https://github.com/magiak/comfyui-faceswap.git
 cd comfyui-faceswap/poc
 # Install FaceFusion separately (see poc/README.md), then:
-python run-ghost-poc.py            # GHOST 1/2/3 with GFPGAN restorer
-python run-ghost-poc.py --extras   # all 13 FaceFusion swap models
+python3 run-ghost-poc.py            # GHOST 1/2/3 with GFPGAN restorer
+python3 run-ghost-poc.py --extras   # all 13 FaceFusion swap models
 ```
 
 See [`poc/README.md`](poc/README.md) for full details.

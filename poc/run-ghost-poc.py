@@ -8,11 +8,11 @@ generated separately in the workflows repo.
 
 See README.md (parent + this folder) for install context.
 
-Usage:
-  python run-ghost-poc.py                      # GHOST 1/2/3 with GFPGAN restorer
-  python run-ghost-poc.py ghost_2_256          # single model
-  python run-ghost-poc.py --restorer none      # skip face restoration
-  python run-ghost-poc.py --extras             # full sweep — every other FaceFusion-supported model
+Usage (use `python3` on Linux servers where `python` isn't symlinked):
+  python3 run-ghost-poc.py                      # GHOST 1/2/3 with GFPGAN restorer
+  python3 run-ghost-poc.py ghost_2_256          # single model
+  python3 run-ghost-poc.py --restorer none      # skip face restoration
+  python3 run-ghost-poc.py --extras             # full sweep — every other FaceFusion-supported model
 
 Expects `facefusion` on PATH. If you're running via Docker, override with
   --facefusion-cmd "docker run --rm --gpus all ... facefusion/facefusion:latest python facefusion.py"

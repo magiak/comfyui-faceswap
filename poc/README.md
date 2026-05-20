@@ -53,14 +53,28 @@ docker run --rm --gpus all \
 
 First swap run will download the requested swap model + restorer on demand.
 
-### Option B — pip (needs Python 3.10+ and CUDA already configured)
+### Option B — install from source (needs Python 3.10+ and CUDA already configured)
+
+> ⚠ Do **NOT** `pip install facefusion` — that PyPI name is a 1 kB squatter package, not the real project. Real FaceFusion is from-source only.
 
 ```bash
-ssh bryanthings@10.0.4.94
-python3 -m venv ~/ai/facefusion-venv
-source ~/ai/facefusion-venv/bin/activate
-pip install facefusion onnxruntime-gpu
-facefusion --help
+sudo apt install -y python3-venv python3-pip
+python3 -m venv ~/facefusion-venv
+source ~/facefusion-venv/bin/activate
+pip install --upgrade pip
+
+git clone https://github.com/facefusion/facefusion ~/facefusion-src
+cd ~/facefusion-src
+python install.py --onnxruntime cuda    # picks correct PyTorch + onnxruntime-gpu
+
+python facefusion.py --help              # verify
+```
+
+Entry point is `python facefusion.py` (not a `facefusion` binary on PATH), so pass it to the wrapper via `--facefusion-cmd`:
+
+```bash
+python3 run-ghost-poc.py --extras \
+  --facefusion-cmd "python3 /home/bryanthings/facefusion-src/facefusion.py"
 ```
 
 ## Running
@@ -70,23 +84,26 @@ facefusion --help
 git clone https://github.com/magiak/comfyui-faceswap.git
 cd comfyui-faceswap/poc
 
+# With from-source install, point at facefusion.py explicitly:
+FF="python3 /home/bryanthings/facefusion-src/facefusion.py"
+
 # Default: GHOST 1/2/3 with GFPGAN restorer
-python run-ghost-poc.py
+python3 run-ghost-poc.py --facefusion-cmd "$FF"
 
 # Single model
-python run-ghost-poc.py ghost_2_256
+python3 run-ghost-poc.py ghost_2_256 --facefusion-cmd "$FF"
 
 # Skip face restoration (see raw swap quality)
-python run-ghost-poc.py --restorer none
+python3 run-ghost-poc.py --restorer none --facefusion-cmd "$FF"
 
 # Full sweep — all 13 FaceFusion swap models
-python run-ghost-poc.py --extras
+python3 run-ghost-poc.py --extras --facefusion-cmd "$FF"
 ```
 
-If you're using Docker, point the script at it:
+If you're using Docker, mount the host path identically so absolute paths in the script resolve inside the container:
 
 ```bash
-python run-ghost-poc.py --facefusion-cmd "docker run --rm --gpus all -v $(pwd):/work -w /work facefusion/facefusion:latest python facefusion.py"
+python3 run-ghost-poc.py --extras --facefusion-cmd "docker run --rm --gpus all -v $(pwd):$(pwd) -w $(pwd) facefusion/facefusion:latest python facefusion.py"
 ```
 
 ## Expected outputs
