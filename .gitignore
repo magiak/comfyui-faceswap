@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+
+# POC outputs — regenerate on demand
+poc/outputs/*.png
+!poc/outputs/.gitkeep
+
+# Local IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

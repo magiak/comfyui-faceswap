@@ -1,0 +1,5 @@
+# Runtime deps for the future custom node.
+# POC harness uses facefusion CLI separately — see poc/README.md for install.
+onnxruntime-gpu>=1.18
+numpy>=1.24
+opencv-python>=4.9
