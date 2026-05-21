@@ -14,8 +14,14 @@ Usage (use `python3` on Linux servers where `python` isn't symlinked):
   python3 run-ghost-poc.py --restorer none      # skip face restoration
   python3 run-ghost-poc.py --extras             # full sweep — every other FaceFusion-supported model
 
-Expects `facefusion` on PATH. If you're running via Docker, override with
-  --facefusion-cmd "docker run --rm --gpus all ... facefusion/facefusion:latest python facefusion.py"
+Expects `facefusion` on PATH. If you're running from source, point at facefusion.py
+AND pass --facefusion-dir so the subprocess runs from inside the FaceFusion repo
+(otherwise processor plugins don't get discovered and you'll see
+"invalid choice: 'face_swapper' (choose from )" errors):
+
+  python3 run-ghost-poc.py --extras \
+    --facefusion-cmd "python3 /home/USER/facefusion-src/facefusion.py" \
+    --facefusion-dir /home/USER/facefusion-src
 """
 
 from __future__ import annotations
@@ -58,7 +64,8 @@ EXTRA_MODELS = [
 RESTORER_CHOICES = ["none", "gfpgan_1.4", "codeformer", "gpen_bfr_256", "gpen_bfr_512"]
 
 
-def run_one(facefusion_cmd: str, model: str, restorer: str, out: Path) -> None:
+def run_one(facefusion_cmd: str, facefusion_dir: str | None, execution_provider: str,
+            model: str, restorer: str, out: Path) -> None:
     processors = ["face_swapper"]
     if restorer != "none":
         processors.append("face_enhancer")
@@ -66,17 +73,18 @@ def run_one(facefusion_cmd: str, model: str, restorer: str, out: Path) -> None:
     cmd = shlex.split(facefusion_cmd) + [
         "headless-run",
         "--source-paths", str(SOURCE),
-        "--target-paths", str(TARGET),
+        "--target-path", str(TARGET),
         "--output-path", str(out),
         "--processors", *processors,
         "--face-swapper-model", model,
+        "--execution-providers", execution_provider,
     ]
     if restorer != "none":
         cmd.extend(["--face-enhancer-model", restorer])
 
     print(f"[{model}] running:", " ".join(shlex.quote(c) for c in cmd))
     t0 = time.time()
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, cwd=facefusion_dir)
     print(f"[{model}] -> {out.name}  ({time.time() - t0:.1f}s)")
 
 
@@ -91,7 +99,12 @@ def main() -> int:
     ap.add_argument("--extras", action="store_true",
                     help=f"Also run: {', '.join(EXTRA_MODELS)}")
     ap.add_argument("--facefusion-cmd", default="facefusion",
-                    help="How to invoke FaceFusion. Default: 'facefusion'. Override for Docker etc.")
+                    help="How to invoke FaceFusion. Default: 'facefusion'. Override for Docker / from-source install.")
+    ap.add_argument("--facefusion-dir", default=None,
+                    help="cwd for the FaceFusion subprocess. REQUIRED when running from source so processor plugins discover correctly.")
+    ap.add_argument("--execution-provider", default="cuda",
+                    choices=["cuda", "tensorrt", "cpu", "directml", "coreml"],
+                    help="Execution provider for onnxruntime (default: cuda).")
     args = ap.parse_args()
 
     if not SOURCE.exists():
@@ -113,7 +126,8 @@ def main() -> int:
     for m in models:
         out = OUTPUTS / f"ghost_poc_{m}_{restore_tag}.png"
         try:
-            run_one(args.facefusion_cmd, m, args.restorer, out)
+            run_one(args.facefusion_cmd, args.facefusion_dir, args.execution_provider,
+                    m, args.restorer, out)
         except subprocess.CalledProcessError as e:
             print(f"[{m}] FAILED with exit code {e.returncode}")
             failures += 1

@@ -77,7 +77,8 @@ Entry point is `python facefusion.py` (not a `facefusion` binary on PATH), so pa
 
 ```bash
 python3 run-ghost-poc.py --extras \
-  --facefusion-cmd "python3 /home/bryanthings/facefusion-src/facefusion.py"
+  --facefusion-cmd "python3 /home/bryanthings/facefusion-src/facefusion.py" \
+  --facefusion-dir /home/bryanthings/facefusion-src
 ```
 
 ## Running
@@ -87,11 +88,13 @@ python3 run-ghost-poc.py --extras \
 git clone https://github.com/magiak/comfyui-faceswap.git
 cd comfyui-faceswap/poc
 
-# With from-source install, point at facefusion.py explicitly:
+# With from-source install, point at facefusion.py AND specify cwd
+# (FaceFusion processor plugins discover correctly only when run from its repo dir):
 FF="python3 /home/bryanthings/facefusion-src/facefusion.py"
+FFDIR="/home/bryanthings/facefusion-src"
 
 # Default: GHOST 1/2/3 with GFPGAN restorer
-python3 run-ghost-poc.py --facefusion-cmd "$FF"
+python3 run-ghost-poc.py --facefusion-cmd "$FF" --facefusion-dir "$FFDIR"
 
 # Single model
 python3 run-ghost-poc.py ghost_2_256 --facefusion-cmd "$FF"
